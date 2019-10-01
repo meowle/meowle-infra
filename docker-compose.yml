@@ -1,5 +1,10 @@
 version: '3.7'
 
+networks:
+  default:
+    external:
+      name: meowle
+
 secrets:
   vscale_api_token: 
     file: ./.data/vscale-api-token
