@@ -18,7 +18,7 @@ services:
         soft: -1
         hard: -1
     labels:
-      - co.elastic.logs/enable=false
+      - co.elastic.logs/enabled=false
     environment:
       discovery.type: single-node
       cluster.name: meowle
@@ -35,7 +35,7 @@ services:
     environment:
       server.name: logs.meowle.testops.ru
     labels:
-      - co.elastic.logs/enable=false
+      - co.elastic.logs/enabled=false
 
       - traefik.enable=true
 
@@ -56,7 +56,7 @@ services:
     restart: always
     user: root
     labels:
-      - co.elastic.logs/enable=false
+      - co.elastic.logs/enabled=false
     environment:
       setup.kibana.host: kibana:5601
       output.elasticsearch.hosts: '["elasticsearch:9200"]'
