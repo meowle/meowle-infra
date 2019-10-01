@@ -30,8 +30,6 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:7.4.0
     restart: always
-    secrets:
-      - kibana_basic_auth
     environment:
       server.name: logs.meowle.testops.ru
     labels:
@@ -62,6 +60,7 @@ services:
     restart: always
     secrets:
       - vscale_api_token
+      - kibana_basic_auth
     command: >
       --api.insecure=true 
       --global.sendanonymoususage=false
