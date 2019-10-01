@@ -1,0 +1,76 @@
+version: '3.7'
+
+secrets:
+  vscale_api_token: 
+    file: ./.data/vscale-api-token
+  kibana_basic_auth: 
+    file: ./.data/kibana-basic-auth
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+    restart: always
+    mem_swappiness: 1
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      discovery.type: single-node
+      cluster.name: meowle
+      bootstrap.memory_lock: true
+      ES_JAVA_OPTS: -Xms2g -Xmx2g
+    volumes:
+      - ./.data/elasticsearch:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.4.0
+    restart: always
+    environment:
+      server.name: logs.meowle.testops.ru
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ghost.rule=Host(`logs.meowle.testops.ru`,`www.logs.meowle.testops.ru`)
+      - traefik.http.routers.ghost.entrypoints=websecure
+      - traefik.http.routers.ghost.tls.certresolver=testops
+      - traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https
+      - traefik.http.routers.ghost_insecure.rule=Host(`logs.meowle.testops.ru`,`www.logs.meowle.testops.ru`)
+      - traefik.http.routers.ghost_insecure.entrypoints=web
+      - traefik.http.routers.ghost_insecure.middlewares=redirect_to_https
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.4.0
+    restart: always
+    user: root
+    environment:
+      setup.kibana.host: kibana:5601
+      output.elasticsearch.hosts: '["elasticsearch:9200"]'
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  lb:
+    image: traefik:v2.0.1
+    restart: always
+    secrets:
+      - vscale_api_token
+    command: >
+      --api.insecure=true 
+      --global.sendanonymoususage=false
+      --providers.docker
+      --providers.docker.exposedByDefault=false
+      --entryPoints.web.address=":80"
+      --entryPoints.websecure.address=":443"
+      --certificatesresolvers.testops.acme.dnschallenge=true
+      --certificatesresolvers.testops.acme.dnschallenge.provider=vscale
+      --certificatesresolvers.testops.acme.email="domains@testops.ru"
+      --certificatesresolvers.testops.acme.storage="/letsencrypt/acme.json"
+    volumes:
+      - ./.data/letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      VSCALE_API_TOKEN_FILE: /run/secrets/vscale_api_token
+    ports:
+      - 80:80
+      - 443:443
+      - 127.0.0.1:8080:8080
