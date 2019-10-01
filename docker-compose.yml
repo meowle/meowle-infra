@@ -1,0 +1,98 @@
+version: '3.7'
+
+networks:
+  default:
+    external:
+      name: meowle
+
+secrets:
+  vscale_api_token: 
+    file: ./.data/vscale-api-token
+  kibana_basic_auth: 
+    file: ./.data/kibana-basic-auth
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+    restart: always
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    labels:
+      - co.elastic.logs/enabled=false
+    environment:
+      discovery.type: single-node
+      cluster.name: meowle
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: -Xms2g -Xmx2g
+      TAKE_FILE_OWNERSHIP: "true"
+      xpack.monitoring.enabled: "true"
+    volumes:
+      - ./.data/elasticsearch:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.4.0
+    restart: always
+    environment:
+      server.name: logs.meowle.testops.ru
+    labels:
+      - co.elastic.logs/enabled=false
+
+      - traefik.enable=true
+
+      - traefik.http.routers.kibana.rule=Host(`logs.meowle.testops.ru`,`www.logs.meowle.testops.ru`)
+      - traefik.http.routers.kibana.entrypoints=websecure
+      - traefik.http.routers.kibana.tls.certresolver=testops
+      - traefik.http.routers.kibana.middlewares=kibana-auth
+
+      - traefik.http.routers.kibana_insecure.rule=Host(`logs.meowle.testops.ru`,`www.logs.meowle.testops.ru`)
+      - traefik.http.routers.kibana_insecure.entrypoints=web
+      - traefik.http.routers.kibana_insecure.middlewares=redirect_to_https
+
+      - traefik.http.middlewares.kibana-auth.basicauth.usersfile=/run/secrets/kibana_basic_auth
+      - traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.4.0
+    restart: always
+    user: root
+    labels:
+      - co.elastic.logs/enabled=false
+    environment:
+      setup.kibana.host: kibana:5601
+      output.elasticsearch.hosts: '["elasticsearch:9200"]'
+    volumes:
+      - ./configs/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  lb:
+    image: traefik:v2.0.1
+    restart: always
+    secrets:
+      - vscale_api_token
+      - kibana_basic_auth
+    command: >
+      --api.insecure=true 
+      --global.sendanonymoususage=false
+      --providers.docker
+      --providers.docker.exposedByDefault=false
+      --entryPoints.web.address=":80"
+      --entryPoints.websecure.address=":443"
+      --certificatesresolvers.testops.acme.dnschallenge=true
+      --certificatesresolvers.testops.acme.dnschallenge.provider=vscale
+      --certificatesresolvers.testops.acme.email="domains@testops.ru"
+      --certificatesresolvers.testops.acme.storage="/letsencrypt/acme.json"
+    volumes:
+      - ./.data/letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      VSCALE_API_TOKEN_FILE: /run/secrets/vscale_api_token
+    ports:
+      - 80:80
+      - 443:443
+      - 127.0.0.1:8080:8080
