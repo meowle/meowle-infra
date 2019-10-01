@@ -10,7 +10,6 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
     restart: always
-    mem_swappiness: 1
     ulimits:
       memlock:
         soft: -1
@@ -18,7 +17,7 @@ services:
     environment:
       discovery.type: single-node
       cluster.name: meowle
-      bootstrap.memory_lock: true
+      bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: -Xms2g -Xmx2g
     volumes:
       - ./.data/elasticsearch:/usr/share/elasticsearch/data
