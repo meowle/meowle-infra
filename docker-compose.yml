@@ -22,6 +22,7 @@ services:
       cluster.name: meowle
       bootstrap.memory_lock: "true"
       ES_JAVA_OPTS: -Xms2g -Xmx2g
+      TAKE_FILE_OWNERSHIP: "true"
     volumes:
       - ./.data/elasticsearch:/usr/share/elasticsearch/data
 
