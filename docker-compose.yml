@@ -39,11 +39,12 @@ services:
       - traefik.http.routers.kibana.rule=Host(`logs.meowle.testops.ru`,`www.logs.meowle.testops.ru`)
       - traefik.http.routers.kibana.entrypoints=websecure
       - traefik.http.routers.kibana.tls.certresolver=testops
-      - traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https
+      - traefik.http.routers.kibana.middlewares=kibana-auth
+      - traefik.http.middlewares.kibana-auth.basicauth.usersfile=/run/secrets/kibana_basic_auth
       - traefik.http.routers.kibana_insecure.rule=Host(`logs.meowle.testops.ru`,`www.logs.meowle.testops.ru`)
       - traefik.http.routers.kibana_insecure.entrypoints=web
       - traefik.http.routers.kibana_insecure.middlewares=redirect_to_https
-      - traefik.http.middlewares.kibana.basicauth.usersfile=/run/secrets/kibana_basic_auth
+      - traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https
 
   filebeat:
     image: docker.elastic.co/beats/filebeat:7.4.0
