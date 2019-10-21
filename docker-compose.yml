@@ -6,9 +6,9 @@ networks:
       name: meowle
 
 secrets:
-  vscale_api_token: 
+  vscale_api_token:
     file: ./.data/vscale-api-token
-  kibana_basic_auth: 
+  kibana_basic_auth:
     file: ./.data/kibana-basic-auth
 
 services:
@@ -28,7 +28,7 @@ services:
       discovery.type: single-node
       cluster.name: meowle
       bootstrap.memory_lock: "true"
-      ES_JAVA_OPTS: -Xms2g -Xmx2g
+      ES_JAVA_OPTS: -Xms4g -Xmx4g
       TAKE_FILE_OWNERSHIP: "true"
       xpack.monitoring.enabled: "true"
     volumes:
@@ -77,7 +77,7 @@ services:
       - vscale_api_token
       - kibana_basic_auth
     command: >
-      --api.insecure=true 
+      --api.insecure=true
       --global.sendanonymoususage=false
       --providers.docker
       --providers.docker.exposedByDefault=false
