@@ -6,8 +6,6 @@ networks:
       name: meowle
 
 secrets:
-  vscale_api_token: 
-    file: ./.data/vscale-api-token
   kibana_basic_auth: 
     file: ./.data/kibana-basic-auth
 
@@ -71,10 +69,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   lb:
-    image: traefik:v2.0.1
+    image: traefik:v2.1.4
     restart: always
     secrets:
-      - vscale_api_token
       - kibana_basic_auth
     command: >
       --api.insecure=true 
@@ -83,15 +80,11 @@ services:
       --providers.docker.exposedByDefault=false
       --entryPoints.web.address=":80"
       --entryPoints.websecure.address=":443"
-      --certificatesresolvers.testops.acme.dnschallenge=true
-      --certificatesresolvers.testops.acme.dnschallenge.provider=vscale
-      --certificatesresolvers.testops.acme.email="domains@testops.ru"
-      --certificatesresolvers.testops.acme.storage="/letsencrypt/acme.json"
+      --certificatesresolvers.tuanviet.acme.tlsChallenge=true
+      --certificatesresolvers.testops.acme.storage="/letsencrypt/acme-testopsru.json"
     volumes:
       - ./.data/letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      VSCALE_API_TOKEN_FILE: /run/secrets/vscale_api_token
     ports:
       - 80:80
       - 443:443
