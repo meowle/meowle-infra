@@ -26,7 +26,7 @@ services:
       discovery.type: single-node
       cluster.name: meowle
       bootstrap.memory_lock: "true"
-      ES_JAVA_OPTS: -Xms2g -Xmx2g
+      ES_JAVA_OPTS: -Xms4g -Xmx4g
       TAKE_FILE_OWNERSHIP: "true"
       xpack.monitoring.enabled: "true"
     volumes:
