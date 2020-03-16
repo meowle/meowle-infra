@@ -80,7 +80,7 @@ services:
       --providers.docker.exposedByDefault=false
       --entryPoints.web.address=":80"
       --entryPoints.websecure.address=":443"
-      --certificatesresolvers.tuanviet.acme.tlsChallenge=true
+      --certificatesresolvers.testops.acme.tlsChallenge=true
       --certificatesresolvers.testops.acme.storage="/letsencrypt/acme-testopsru.json"
     volumes:
       - ./.data/letsencrypt:/letsencrypt
